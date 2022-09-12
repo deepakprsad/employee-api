@@ -1,77 +1,130 @@
 package com.example.demo.servicesImplement;
 
 import com.example.demo.model.Employee;
-import com.example.demo.model.ResponseMessage;
+import com.example.demo.model.ResponseData;
 import com.example.demo.repository.EmployeeRepository;
 import com.example.demo.services.EmployeeServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+
 @Service
 public class EmployeeServiceImplement implements EmployeeServices {
     @Autowired
     EmployeeRepository employeeRepository;
     @Override
-    public List<Employee> getAllEmployee() {
+    public ResponseData getAllEmployee() {
+        ResponseData responseData=new ResponseData();
         try {
-            return employeeRepository.findAll();
+            var emp= employeeRepository.findAll(Sort.by("id"));
+            responseData.setIsSuccessful(true);
+            responseData.setMessage("All Employee Details");
+            responseData.setData(emp);
+            return responseData;
+
         }catch (Exception e)
         {
-            return null;
+            responseData.setIsSuccessful(false);
+            responseData.setException(e.getMessage());
+            responseData.setMessage("Data not found");
+            return responseData;
         }
     }
 
     @Override
-    public Employee getEmployeeById(Long id) {
-        ResponseMessage  responseMessage = new ResponseMessage();
-      try {
-          Employee employee = employeeRepository.findById(id).orElse(null);
-          return employee;
+    public ResponseData getEmployeeById(Long id) {
+        ResponseData responseData=new ResponseData();
+        try {
+            Employee employee = employeeRepository.findById(id).orElse(null);
+
+            if(employee !=null){
+                responseData.setIsSuccessful(true);
+                responseData.setMessage("Employee Details Found");
+                responseData.setData(employee);
+            }
+            else{
+                responseData.setIsSuccessful(false);
+                responseData.setMessage("Employee id not found");
+            }
+          return responseData;
       }catch (Exception e){
-          return null;
-      }
-    }
-
-    @Override
-    public String deleteEmployeeById(Long id) {
-        try {
-             employeeRepository.deleteById(id);
-             return "Employee details deleted successfully.";
-        }catch (Exception e)
-        {
-            return "Employee Id not found.";
+            responseData.setIsSuccessful(false);
+            responseData.setException(e.getMessage());
+            responseData.setMessage("Employee not found for id "+id);
+            return responseData;
         }
     }
 
     @Override
-    public String updateEmployeeNameById(Long id, String name) {
+    public ResponseData deleteEmployeeById(Long id) {
+        ResponseData responseData = new ResponseData();
         try {
-                Employee employee = employeeRepository.findById(id).orElse(null);
-                if(name == null || name.equals(""))
-                    return "Name is missing.";
-                else if(employee == null)
-                    return "Employee not found.";
+             Employee employee = employeeRepository.findById(id).orElse(null);
+             employeeRepository.deleteById(id);
+            responseData.setIsSuccessful(true);
+            responseData.setMessage("Employee Details Deleted Successfully.");
+            responseData.setData(employee);
+            return responseData;
+
+        }catch (Exception e)
+        {
+            responseData.setIsSuccessful(false);
+            responseData.setMessage("Employee Details not found.");
+            responseData.setException(e.getMessage());
+            return responseData;
+        }
+    }
+
+    @Override
+    public ResponseData updateEmployeeNameById(Long id, String name) {
+        ResponseData responseData = new ResponseData();
+        Employee employee = employeeRepository.findById(id).orElse(null);
+        try {
+                if(name == null || name.equals("")) {
+                    responseData.setIsSuccessful(false);
+                    responseData.setMessage("Name is missing.");
+                    responseData.setData(employee);
+
+                }
+                else if(employee == null){
+                    responseData.setIsSuccessful(false);
+                    responseData.setMessage("Employee not found");
+                }
                 else {
                     employee.setName(name);
                     employeeRepository.save(employee);
-                    return "Employee details updated successfully.";
+                    responseData.setIsSuccessful(true);
+                    responseData.setMessage("Employee details updated successfully.");
+                    responseData.setData(employee);
                 }
+            return responseData;
         }catch(Exception e)
         {
-            return e.getMessage();
+            responseData.setIsSuccessful(false);
+            responseData.setException(e.getMessage());
+            responseData.setData(employee);
+            return responseData;
         }
 
     }
 
     @Override
-    public String addEmployeeDetails(Employee employee) {
+    public ResponseData addEmployeeDetails(Employee employee) {
+        ResponseData responseData = new ResponseData();
         try {
             employeeRepository.save(employee);
-            return "Added Employee details successfully.";
+            responseData.setIsSuccessful(true);
+            responseData.setMessage("Added Employee details successfully.");
+            responseData.setData(employee);
+            return responseData;
         }catch (Exception e)
         {
-            return e.getMessage();
+            responseData.setIsSuccessful(false);
+            responseData.setMessage("Employee Details is not added");
+            responseData.setException(e.getMessage());
+            responseData.setData(employee);
+            return responseData;
         }
 
     }
